@@ -1,8 +1,8 @@
 # Assumptions 
 
 - Change data capture flow :
-	- Source: from an Oracle 19c to a Kafka topic using Debezium
-	- Sink:  from a Kafka topic to a MongoDB collection    
+  - Source: from an Oracle 19c to a Kafka topic using Debezium
+  - Sink:  from a Kafka topic to a MongoDB collection    
 - No transformation to apply to the captured change payloads
 - Store change payloads as they are in MongoDB
 - We don’t apply change types (Inserts, updates, deletes …)
@@ -23,10 +23,10 @@
 First clone this repository to your local machine
 
 ```bash
-git clone
+git clone https://github.com/snoussi/cdc-demo.git
 ```
 
-Login to your Openshift cluster and create a new project/namespace on Openshift to hold the demo
+Login to your Openshift cluster and create a new project/namespace named `cdc-demo` to hold the demo
 
 ```bash
 oc new-project cdc-demo
@@ -66,9 +66,9 @@ podman run -d \
 podman logs -f dbz_oracle19
 ```
 
-4.  Open a  `SQLPlus` terminal to the Oracle database container.
+4.  Open an `SQLPlus` terminal to the Oracle database container.
 ```bash
-podman  exec -it dbz_oracle19 sqlplus sys/oraclepw as sysdba
+podman exec -it dbz_oracle19 sqlplus sys/oraclepw as sysdba
 ```
 
 5. **Oracle LogMiner - Archive logs configuration**: execute the following SQL commands inside the `SQLPlus` terminal
@@ -106,24 +106,24 @@ ALTER DATABASE OPEN;
 ARCHIVE LOG LIST;
 ```
 
-The final output from the `SQLPlus` terminal show the following:
+The final output from the `SQLPlus` terminal shows the following:
 
 ```RESULT
-Database log mode	       Archive Mode
-Automatic archival	       Enabled
-Archive destination	       USE_DB_RECOVERY_FILE_DEST
+Database log mode        Archive Mode
+Automatic archival         Enabled
+Archive destination        USE_DB_RECOVERY_FILE_DEST
 Oldest online log sequence     4
 Next log sequence to archive   6
-Current log sequence	       6
+Current log sequence         6
 ```
 
 7.  **Oracle LogMiner - Redo logs configuration**: There are two log mining strategies for Debezium’s Oracle connector. The strategy controls how the connector interacts with Oracle LogMiner and how the connector ingests schema and table changes:
 
-	**`redo_log_catalog`**
-	The data dictionary will be written periodically to the redo logs, causing a higher generation of archive logs over time. This setting enables tracking DDL changes, so if a table’s schema changes, this will be the ideal strategy for that purpose.
+  **`redo_log_catalog`**
+  The data dictionary will be written periodically to the redo logs, causing a higher generation of archive logs over time. This setting enables tracking DDL changes, so if a table’s schema changes, this will be the ideal strategy for that purpose.
 
-	**`online_catalog`**
-	The data dictionary will not be written periodically to the redo logs, leaving the generation of archive logs consistent with current behavior. Oracle LogMiner will mine changes substantially faster; however, this performance comes at the cost of **not** tracking DDL changes. If a table’s schema remains constant, this will be the ideal strategy for that purpose.
+  **`online_catalog`**
+  The data dictionary will not be written periodically to the redo logs, leaving the generation of archive logs consistent with current behavior. Oracle LogMiner will mine changes substantially faster; however, this performance comes at the cost of **not** tracking DDL changes. If a table’s schema remains constant, this will be the ideal strategy for that purpose.
 
 When using the **`online_catalog`** mode, you can safely skip this step entirely.
 
@@ -136,9 +136,9 @@ This output tells us there are 3 log groups, and each group consumes 200MB of sp
 ```RESULT
     GROUP#    SIZE_MB STATUS
 ---------- ---------- ----------------
-	     1	      200 INACTIVE
-	     2	      200 CURRENT
-	     3	      200 UNUSED
+       1        200 INACTIVE
+       2        200 CURRENT
+       3        200 UNUSED
 ```
 
 Now, execute the following SQL to determine the filenames and locations of the redo logs.
@@ -149,9 +149,9 @@ SELECT GROUP#, MEMBER FROM V$LOGFILE ORDER BY 1, 2;
 ```RESULT
     GROUP# MEMBER
 ---------- ---------------------------------------------------
-	     1 /opt/oracle/oradata/ORCLCDB/redo01.log
-	     2 /opt/oracle/oradata/ORCLCDB/redo02.log
-	     3 /opt/oracle/oradata/ORCLCDB/redo03.log
+       1 /opt/oracle/oradata/ORCLCDB/redo01.log
+       2 /opt/oracle/oradata/ORCLCDB/redo02.log
+       3 /opt/oracle/oradata/ORCLCDB/redo03.log
 ```
 
 Now, execute the following SQL to drop and re-create the log group with the size of `500MB`. We will use the same log file name in the `MEMBER` column from the `VLOGFILE` table.
@@ -175,9 +175,9 @@ SELECT GROUP#, BYTES/1024/1024 SIZE_MB, STATUS FROM V$LOG ORDER BY 1;
 ```RESULT
     GROUP#    SIZE_MB STATUS
 ---------- ---------- ----------------
-	     1	      400 UNUSED
-	     2	      200 CURRENT
-	     3	      200 UNUSED
+       1        400 UNUSED
+       2        200 CURRENT
+       3        200 UNUSED
 ```
 9. **Oracle LogMiner - Supplemental Logging configuration**: For Debezium to interface with LogMiner and work with chained rows and various storage arrangements, database supplemental logging must be enabled at a minimum level. To enable this level, execute the following SQL in the `SQLPlus` terminal:
 
@@ -305,7 +305,7 @@ GRANT SELECT ON V_$TRANSACTION TO c##dbzuser CONTAINER=ALL;
 
 10.  You can refer to [Debezium for Oracle - Part 1: Installation and Setup](https://debezium.io/blog/2022/09/30/debezium-oracle-series-part-1/) for further explanations
 
-11. Create a sample table to use during the demo, execute the following SQL in the `SQLPlus` terminal:
+11. Create a sample table to use during the demo, and execute the following SQL in the `SQLPlus` terminal:
 
 ```SQL
 CONNECT sys/oraclepw@ORCLCDB as sysdba;
@@ -371,8 +371,6 @@ ngrok tcp 1521
 
 
 ## MongoDB installation
-
-[Getting Started | MongoDB Operator](https://ot-mongodb-operator.netlify.app/docs/getting-started/)
 
 For this installation, we will use the MongoDB operator offered by `opstreelabs` 
 
@@ -511,6 +509,7 @@ oc apply -f my-amqstreams-cluster.yml
 2. Find and note the bootstrap Servers url :
 
 `my-amqstreams-cluster-kafka-bootstrap.cdc-demo.svc:9092`
+
 ### Source - Kafka Connect for Debezium
 
 1. Create the `debezium-oracle-kafka-connect` imagestream
@@ -680,7 +679,6 @@ oc delete all -l app.kubernetes.io/name=camel-mongodb-sink
 
 
 # Demo script
-``
 
 1. Open a new terminal, log into the sample `customers` database and run the following SQL commands:
 
@@ -695,7 +693,7 @@ UPDATE customers set city= 'Kabul' where id=1004;
 COMMIT;
 ```
 
-2. Verify that the changes to the customers database has been replicated into MongoDB
+2. Verify that the changes to the customers database have been replicated into MongoDB
 
 
 # Learn More
