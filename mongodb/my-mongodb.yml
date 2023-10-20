@@ -1,0 +1,18 @@
+apiVersion: opstreelabs.in/v1alpha1
+kind: MongoDB
+metadata:
+  name: my-mongodb
+spec:
+  kubernetesConfig:
+    image: 'quay.io/opstree/mongo:v5.0.6'
+    imagePullPolicy: IfNotPresent
+  mongoDBSecurity:
+    mongoDBAdminUser: admin
+    secretRef:
+      key: password
+      name: mongodb-secret
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    storageClass: lvms-vg1
+    storageSize: 1Gi

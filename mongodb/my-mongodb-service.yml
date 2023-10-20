@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-mongodb
+  labels:
+    app: mongodb-standalone
+spec:
+  type: NodePort
+  ports:
+    - port: 27017
+      targetPort: 27017
+      nodePort: 32017
+      name: mongodb-port
+  selector:
+    app: mongodb-standalone

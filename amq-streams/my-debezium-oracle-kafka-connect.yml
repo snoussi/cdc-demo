@@ -1,0 +1,30 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-debezium-oracle-kafka-connect
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  replicas: 1
+  bootstrapServers: 'my-amqstreams-cluster-kafka-bootstrap.cdc-demo.svc:9092'
+  build:
+    output:
+      type: imagestream
+      image: debezium-oracle-kafka-connect:latest
+    plugins:
+     - name: debezium-connector-oracle
+       artifacts:
+         - type: zip
+           url: 'https://maven.repository.redhat.com/ga/io/debezium/debezium-connector-oracle/2.1.4.Final-redhat-00001/debezium-connector-oracle-2.1.4.Final-redhat-00001-plugin.zip'
+         - type: zip
+           url: 'https://maven.repository.redhat.com/ga/io/debezium/debezium-scripting/2.1.4.Final-redhat-00001/debezium-scripting-2.1.4.Final-redhat-00001.zip'
+         - type: jar
+           url: 'https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/21.1.0.0/ojdbc8-21.1.0.0.jar'
+  config:
+    group.id: debezium-oracle-connect
+    offset.storage.topic: connect-cluster-offsets
+    config.storage.topic: connect-cluster-configs
+    status.storage.topic: connect-cluster-status
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1

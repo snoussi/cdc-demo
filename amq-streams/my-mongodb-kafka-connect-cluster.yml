@@ -1,0 +1,30 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-mongodb-kafka-connect-cluster
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  replicas: 1
+  bootstrapServers: my-kafka-cluster-kafka-bootstrap.cdc-demo.svc:9092
+  build:
+    output:
+      type: imagestream
+      image: mongodb-kafka-connect:latest
+    plugins:
+      - name: my-mongo-kafka-connect-plugin
+        artifacts:
+          - type: maven
+            repository: https://repo1.maven.org/maven2
+            group: org.mongodb.kafka
+            artifact: mongo-kafka-connect
+            version: 1.11.0
+  config:
+    group.id: mongodb-connect-cluster
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+    offset.storage.topic: connect-offsets
+    config.storage.topic: connect-configs
+    status.storage.topic: connect-status

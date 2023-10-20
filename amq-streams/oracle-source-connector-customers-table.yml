@@ -1,0 +1,19 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: oracle-source-connector-customers-table
+  labels:
+    strimzi.io/cluster: my-debezium-oracle-kafka-connect
+spec:
+  class: io.debezium.connector.oracle.OracleConnector
+  tasksMax: 1
+  config:
+    schema.history.internal.kafka.bootstrap.servers: 'my-amqstreams-cluster-kafka-bootstrap.cdc-demo.svc:9092'
+    schema.history.internal.kafka.topic: schema-changes
+    database.hostname: 0.tcp.eu.ngrok.io
+    database.port: 19480
+    database.user: c##dbzuser
+    database.password: dbz
+    database.dbname: ORCLCDB
+    topic.prefix: oracle-source
+    table.include.list: C##DBZUSER.CUSTOMERS
